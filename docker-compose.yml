@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: allezulassungen_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-allezulassungen_root}
+      MYSQL_DATABASE: ${DB_NAME:-allezulassungen}
+      MYSQL_USER: ${DB_USER:-allezulassungen}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-allezulassungen_pass}
+    ports:
+      - "${DB_PORT:-3311}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - allezulassungen
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scrapper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: allezulassungen_scrapper
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-allezulassungen}
+      DB_USER: ${DB_USER:-allezulassungen}
+      DB_PASSWORD: ${DB_PASSWORD:-allezulassungen_pass}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DOWNLOAD_DIR: /app/data/raw
+      IMAGES_DIR: /app/shared-images
+      IMAGES_BASE_URL: /images
+    volumes:
+      - ./data:/app/data
+      - shared_images:/app/shared-images
+    networks:
+      - allezulassungen
+
+  backend:
+    build:
+      context: ../allezulassungen Backend
+      dockerfile: Dockerfile
+    container_name: allezulassungen_backend
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-allezulassungen}
+      DB_USER: ${DB_USER:-allezulassungen}
+      DB_PASSWORD: ${DB_PASSWORD:-allezulassungen_pass}
+      APP_ENV: ${APP_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "8083:80"
+    volumes:
+      - shared_images:/var/www/html/public/images
+    networks:
+      - allezulassungen
+
+  frontend:
+    build:
+      context: ../allezulassungen Frontend
+      dockerfile: Dockerfile
+    container_name: allezulassungen_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend/api
+    ports:
+      - "3000:3000"
+    networks:
+      - allezulassungen
+
+volumes:
+  mariadb_data:
+    driver: local
+  shared_images:
+    driver: local
+
+networks:
+  allezulassungen:
+    driver: bridge
