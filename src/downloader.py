@@ -23,8 +23,8 @@ class KBADownloader:
         # Monatliche Publikationen
         'FZ10': '{base}/FZ10/fz10_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
         'FZ11': '{base}/FZ11/fz11_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
-        'FZ8':  '{base}/FZ8/fz8_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
-        'FZ9':  '{base}/FZ9/fz9_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
+        'FZ8':  '{base}/FZ8/fz8_{year}{month:02d}.xlsx?__blob=publicationFile&v=2',
+        'FZ9':  '{base}/FZ9/fz9_{year}{month:02d}.xlsx?__blob=publicationFile&v=2',
         'FZ28': '{base}/FZ28/fz28_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
         # Jaehrliche Publikationen
         'FZ4':  '{base}/FZ4/fz4_{year}.xlsx?__blob=publicationFile&v=2',

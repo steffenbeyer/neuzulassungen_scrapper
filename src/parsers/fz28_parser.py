@@ -1,6 +1,30 @@
 """
 FZ28 Parser: Neuzulassungen mit alternativen Antrieben.
-Elektro, Hybrid, Plug-in-Hybrid, Wasserstoff, Erdgas etc.
+Monatliche Publikation mit Aufschluesselung nach BEV, PHEV, Hybrid, Gas, H2.
+
+Relevante Sheets im monatlichen Format (Stand 2024):
+- FZ 28.4: Marken-Aufschluesselung mit allen Antriebsarten
+- FZ 28.8: Segment-Aufschluesselung
+- FZ 28.9: Bundesland-Aufschluesselung
+
+Spaltenstruktur FZ 28.4 (Zeile 7-11 = Header):
+  Col 1:  Marke
+  Col 2:  Anzahl insgesamt (alle Antriebe inkl. Verbrenner)
+  Col 3:  Darunter alternative Antriebe - Anzahl
+  Col 4:  Anteil in %
+  Col 5:  Elektro-Antriebe Anzahl insgesamt
+  Col 6:  Elektro Anteil in %
+  Col 7:  davon Elektro (BEV)
+  Col 8:  davon Brennstoffzelle (Wasserstoff/FCEV)
+  Col 9:  davon Plug-in-Hybrid
+  Col 10: Hybrid (ohne Plug-in) Anzahl insgesamt
+  Col 11: darunter Voll-Hybrid
+  Col 12: darunter Benzin-Hybrid
+  Col 13: darunter Voll-Hybrid (Benzin)
+  Col 14: darunter Diesel-Hybrid
+  Col 15: darunter Voll-Hybrid (Diesel)
+  Col 16: Gas insgesamt
+  Col 17: Wasserstoff
 """
 import logging
 from pathlib import Path
@@ -12,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class FZ28Parser(BaseParser):
-    """Parser fuer FZ28: Neuzulassungen mit alternativen Antrieben."""
+    """Parser fuer FZ28: Monatliche Neuzulassungen mit alternativen Antrieben."""
 
     QUELLE_KUERZEL = 'FZ28'
 
@@ -20,7 +44,19 @@ class FZ28Parser(BaseParser):
         'insgesamt', 'zusammen', 'gesamt', 'summe',
         'sonstige', 'übrige', 'andere',
         'quelle:', 'stand:', 'datum:',
+        'kraftfahrt-bundesamt', 'zurück',
     ]
+
+    # Fuel type column mappings for FZ 28.4 sheet.
+    # Maps (column_index, fuel_type_name).
+    # Column indices are 0-based relative to the data area (col B = index 1).
+    FUEL_COLUMNS = {
+        7:  'Elektro',           # BEV
+        8:  'Brennstoffzelle',   # FCEV / Wasserstoff-Antrieb
+        9:  'Plug-in-Hybrid',    # PHEV
+        10: 'Hybrid',            # Hybrid (ohne Plug-in)
+        16: 'Gas',               # Erdgas/CNG + LPG
+    }
 
     def _is_skip_row(self, text):
         """Prueft ob eine Zeile uebersprungen werden soll."""
@@ -29,52 +65,13 @@ class FZ28Parser(BaseParser):
         lower = str(text).strip().lower()
         return any(pattern in lower for pattern in self.SKIP_PATTERNS)
 
-    def _is_marke_row(self, row_values):
-        """Erkennt ob eine Zeile eine Marken-Ueberschrift ist."""
-        first_col = str(row_values[0]).strip() if row_values[0] else ''
-        second_col = str(row_values[1]).strip() if len(row_values) > 1 and row_values[1] else ''
-
-        if not first_col:
-            return False, None
-
-        if not second_col and first_col and first_col == first_col.upper():
-            if len(first_col) >= 2 and not self._is_skip_row(first_col):
-                return True, first_col
-
-        return False, None
-
-    def _detect_kraftstoff_from_sheet(self, sheet_name):
-        """Erkennt den Kraftstofftyp aus dem Sheet-Namen."""
-        name_lower = (sheet_name or '').lower()
-
-        mapping = {
-            'elektro': 'Elektro',
-            'bev': 'Elektro',
-            'batterie': 'Elektro',
-            'plug-in': 'Plug-in-Hybrid',
-            'phev': 'Plug-in-Hybrid',
-            'hybrid': 'Hybrid',
-            'wasserstoff': 'Wasserstoff',
-            'h2': 'Wasserstoff',
-            'erdgas': 'Erdgas/CNG',
-            'cng': 'Erdgas/CNG',
-            'lpg': 'Autogas/LPG',
-            'autogas': 'Autogas/LPG',
-        }
-
-        for key, value in mapping.items():
-            if key in name_lower:
-                return value
-
-        return None
-
     def parse(self, filepath):
         """
-        Parst eine FZ28 Excel-Datei (alternative Antriebe).
+        Parst eine monatliche FZ28 Excel-Datei.
 
         Returns:
             list: Liste von Dicts mit keys:
-                marke, modell, jahr, monat (=0), anzahl, kraftstoff
+                marke, modell, jahr, monat, anzahl, kraftstoff
         """
         self.load(filepath)
         year, month = self.extract_year_month_from_filename()
@@ -84,135 +81,157 @@ class FZ28Parser(BaseParser):
             self.close()
             return []
 
-        # FZ28 ist monatlich verfuegbar (frueherer Code ging von jaehrlich aus)
         monat = month if month else 0
         results = []
         sheet_names = self.get_sheet_names()
 
-        logger.info(f"FZ28 {year}: {len(sheet_names)} Sheets: {sheet_names}")
+        # Marken-Sheet finden: Suche nach Sheet mit "Marke" in Spalte B
+        # Sheet-Nummer variiert (FZ 28.4 ab 2024, FZ 28.5 in 2023, etc.)
+        brand_sheet_name = self._find_brand_sheet(sheet_names)
 
-        for sheet_name in sheet_names:
-            sheet = self.get_sheet(name=sheet_name)
-            if not sheet:
-                continue
-
-            kraftstoff = self._detect_kraftstoff_from_sheet(sheet_name)
-            sheet_results = self._parse_sheet(sheet, sheet_name, year, monat, kraftstoff)
-            results.extend(sheet_results)
+        if brand_sheet_name:
+            sheet = self.get_sheet(name=brand_sheet_name)
+            if sheet:
+                results = self._parse_brand_fuel_sheet(sheet, year, monat)
+        else:
+            logger.warning(f"FZ28 {year}/{monat}: Kein Marken-Sheet gefunden")
 
         self.close()
-
-        logger.info(f"FZ28 {year}: {len(results)} Datensaetze geparst")
+        logger.info(f"FZ28 {year}/{monat:02d}: {len(results)} Datensaetze geparst")
         return results
 
-    def _parse_sheet(self, sheet, sheet_name, year, monat, kraftstoff=None):
-        """Parst ein einzelnes Sheet der FZ28-Datei."""
+    def _find_brand_sheet(self, sheet_names):
+        """
+        Findet das Sheet mit Marken-Aufschluesselung.
+        Prueft Sheets mit 'FZ 28.' im Namen auf 'Marke' in Spalte B.
+        """
+        for name in sheet_names:
+            if '28.' not in name:
+                continue
+            sheet = self.get_sheet(name=name)
+            if not sheet:
+                continue
+            rows = list(sheet.iter_rows(values_only=True, max_row=15))
+            for row in rows:
+                if row and len(row) > 1 and row[1]:
+                    cell = str(row[1]).strip().lower()
+                    if cell == 'marke':
+                        logger.info(f"Marken-Sheet gefunden: {name}")
+                        return name
+        return None
+
+    def _parse_brand_fuel_sheet(self, sheet, year, monat):
+        """
+        Parst FZ 28.4: Marken mit Antriebsart-Aufschluesselung.
+
+        Jede Markenzeile wird in mehrere Records aufgespalten,
+        einen pro Antriebsart mit Anzahl > 0.
+        """
         results = []
-        current_marke = None
         rows = list(sheet.iter_rows(values_only=True))
 
-        header_row = None
-        modell_col = 0
-        anzahl_col = None
-        kraftstoff_col = None
-
-        # Header-Zeile finden
+        # Finde die Headerzeile mit 'Marke'
+        data_start = None
         for i, row in enumerate(rows):
             if not row:
                 continue
-            row_str = [str(c).strip().lower() if c else '' for c in row]
-
-            for j, cell in enumerate(row_str):
-                if any(h in cell for h in ['modellreihe', 'modell', 'handelsname']):
-                    modell_col = j
-                    header_row = i
-                elif any(h in cell for h in ['marke', 'hersteller']) and header_row is None:
-                    modell_col = j
-                elif any(h in cell for h in ['kraftstoff', 'antrieb']):
-                    kraftstoff_col = j
-
-            if header_row == i:
-                for j, cell in enumerate(row_str):
-                    if cell and any(m in cell for m in [
-                        'anzahl', 'neuzulassungen', 'zulassungen'
-                    ]):
-                        anzahl_col = j
-                        break
-
-                if anzahl_col is None and modell_col is not None:
-                    for j in range(modell_col + 1, min(modell_col + 5, len(row))):
-                        if j < len(row) and row[j] is not None:
-                            try:
-                                int(str(row[j]).replace('.', '').replace(',', ''))
-                                anzahl_col = j
-                                break
-                            except (ValueError, AttributeError):
-                                continue
+            cell1 = str(row[1]).strip().lower() if len(row) > 1 and row[1] else ''
+            if 'marke' in cell1:
+                # Daten beginnen nach dem multi-row header (typisch 4-5 Zeilen)
+                data_start = i + 5  # Skip header rows
                 break
 
-        if header_row is None:
-            header_row = 0
+        if data_start is None:
+            logger.warning("FZ 28.4: Konnte Headerzeile nicht finden")
+            return results
 
-        if anzahl_col is None:
-            anzahl_col = modell_col + 1
+        # Dynamisch die Spaltenindizes bestimmen
+        fuel_cols = self._detect_fuel_columns(rows, data_start)
 
-        # Daten parsen
-        for i in range(header_row + 1, len(rows)):
+        for i in range(data_start, len(rows)):
             row = rows[i]
-            if not row or len(row) <= max(modell_col, anzahl_col):
+            if not row or len(row) < 3:
                 continue
 
-            is_marke, marke_name = self._is_marke_row(row)
-            if is_marke:
-                current_marke = marke_name
-                marke_anzahl = DataNormalizer.normalize_anzahl(
-                    row[anzahl_col] if anzahl_col < len(row) else None
-                )
-                row_kraftstoff = None
-                if kraftstoff_col is not None and kraftstoff_col < len(row) and row[kraftstoff_col]:
-                    row_kraftstoff = DataNormalizer.normalize_kraftstoff(
-                        str(row[kraftstoff_col]).strip()
-                    )
-                final_kraftstoff = row_kraftstoff or kraftstoff
-
-                if marke_anzahl > 0 and current_marke and final_kraftstoff:
-                    norm_marke = DataNormalizer.normalize_marke(current_marke)
-                    if norm_marke:
-                        results.append({
-                            'marke': norm_marke,
-                            'modell': DataNormalizer.normalize_modell('Gesamt') or 'Gesamt',
-                            'jahr': year,
-                            'monat': monat,
-                            'anzahl': marke_anzahl,
-                            'kraftstoff': final_kraftstoff,
-                        })
+            marke_raw = str(row[1]).strip() if row[1] else ''
+            if not marke_raw or self._is_skip_row(marke_raw):
                 continue
 
-            if current_marke:
-                modell_name = str(row[modell_col]).strip() if row[modell_col] else None
-                norm_modell = DataNormalizer.normalize_modell(modell_name) if modell_name else None
+            # Copyright/Fussnoten beenden
+            if '©' in marke_raw or 'kraftfahrt' in marke_raw.lower():
+                break
 
-                if modell_name and not self._is_skip_row(modell_name) and norm_modell:
-                    anzahl = DataNormalizer.normalize_anzahl(
-                        row[anzahl_col] if anzahl_col < len(row) else None
-                    )
-                    row_kraftstoff = None
-                    if kraftstoff_col is not None and kraftstoff_col < len(row) and row[kraftstoff_col]:
-                        row_kraftstoff = DataNormalizer.normalize_kraftstoff(
-                            str(row[kraftstoff_col]).strip()
-                        )
-                    final_kraftstoff = row_kraftstoff or kraftstoff
+            norm_marke = DataNormalizer.normalize_marke(marke_raw)
+            if not norm_marke:
+                continue
 
-                    if anzahl > 0 and final_kraftstoff:
-                        norm_marke = DataNormalizer.normalize_marke(current_marke)
-                        if norm_marke:
-                            results.append({
-                                'marke': norm_marke,
-                                'modell': norm_modell,
-                                'jahr': year,
-                                'monat': monat,
-                                'anzahl': anzahl,
-                                'kraftstoff': final_kraftstoff,
-                            })
+            # Fuer jede Antriebsart einen Record erzeugen
+            for col_idx, kraftstoff in fuel_cols.items():
+                if col_idx >= len(row):
+                    continue
+
+                anzahl = self._parse_cell_value(row[col_idx])
+                if anzahl > 0:
+                    results.append({
+                        'marke': norm_marke,
+                        'modell': 'Gesamt',
+                        'jahr': year,
+                        'monat': monat,
+                        'anzahl': anzahl,
+                        'kraftstoff': kraftstoff,
+                    })
+
+            # Konventionelle Antriebe berechnen (Gesamt minus Alternative)
+            total = self._parse_cell_value(row[2]) if len(row) > 2 else 0
+            alt_total = self._parse_cell_value(row[3]) if len(row) > 3 else 0
+            konventionell = total - alt_total
+            if konventionell > 0:
+                results.append({
+                    'marke': norm_marke,
+                    'modell': 'Gesamt',
+                    'jahr': year,
+                    'monat': monat,
+                    'anzahl': konventionell,
+                    'kraftstoff': 'Konventionell',
+                })
 
         return results
+
+    def _detect_fuel_columns(self, rows, data_start):
+        """
+        Versucht die Kraftstoff-Spalten dynamisch aus den Header-Zeilen zu erkennen.
+        Faellt auf Standard-Mapping zurueck wenn nicht erfolgreich.
+        """
+        # Pruefe die Header-Zeilen (typisch 4-5 Zeilen vor data_start)
+        for i in range(max(0, data_start - 6), data_start):
+            if i >= len(rows) or not rows[i]:
+                continue
+            row_str = [str(c).strip().lower() if c else '' for c in rows[i]]
+
+            detected = {}
+            for j, cell in enumerate(row_str):
+                if 'elektro (bev)' in cell or ('elektro' in cell and 'plug' not in cell and 'antrieb' not in cell and j > 5):
+                    detected[j] = 'Elektro'
+                elif 'brennstoffzelle' in cell:
+                    detected[j] = 'Brennstoffzelle'
+                elif 'plug-in' in cell or 'plug in' in cell:
+                    detected[j] = 'Plug-in-Hybrid'
+                elif 'hybrid' in cell and 'plug' not in cell and 'voll' not in cell and 'benzin' not in cell and 'diesel' not in cell:
+                    if 'ohne' in cell or j > 8:
+                        detected[j] = 'Hybrid'
+                elif 'gas' in cell and 'insgesamt' in cell:
+                    detected[j] = 'Gas'
+
+            if len(detected) >= 3:
+                logger.debug(f"Spalten dynamisch erkannt: {detected}")
+                return detected
+
+        # Fallback auf Standard-Mapping
+        logger.debug("Verwende Standard-Spalten-Mapping")
+        return self.FUEL_COLUMNS
+
+    def _parse_cell_value(self, value):
+        """Parst einen Zellenwert zu int, behandelt '-' und None."""
+        if value is None or str(value).strip() in ('', '-', '.', '–'):
+            return 0
+        return DataNormalizer.normalize_anzahl(value)
