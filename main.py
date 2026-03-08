@@ -34,6 +34,7 @@ from src.acea_importer import ACEAImporter
 from src.wikidata_importer import WikidataImporter
 from src.openev_importer import OpenEVImporter
 from src.llm_enricher import LLMEnricher
+from src.fuel_mapper import FuelMapper
 
 
 def setup_logging():
@@ -399,6 +400,24 @@ def run_llm_enrich_modelle(force=False):
     )
 
 
+def run_fuel_map(year=None, month=None):
+    """Berechnet geschaetzte Kraftstoff-Verteilungen aus FZ28+FZ10."""
+    logger = logging.getLogger('fuel_map')
+    logger.info("========================================")
+    logger.info("KRAFTSTOFF-MAPPING GESTARTET")
+    logger.info("========================================")
+
+    mapper = FuelMapper()
+    stats = mapper.run(year=year, month=month)
+
+    logger.info(
+        f"Fertig: {stats['mapped']} Datensaetze geschrieben, "
+        f"{stats['skipped_no_fz28']} ohne FZ28, "
+        f"{stats['skipped_no_fz10']} ohne FZ10, "
+        f"{stats['errors']} Fehler"
+    )
+
+
 def run_parse_file(filepath):
     """Parst eine einzelne Datei (fuer Tests/Debugging)."""
     logger = logging.getLogger('parse_file')
@@ -457,7 +476,7 @@ def main():
             'import-all', 'import-acea', 'import-openev',
             'enrich-marken', 'enrich-modelle', 'enrich-all',
             'llm-enrich-marken', 'llm-enrich-modelle', 'llm-enrich-all',
-            'fix-logos'
+            'fix-logos', 'fuel-map'
         ],
         default='initial',
         help='Betriebsmodus (default: initial)'
@@ -519,6 +538,8 @@ def main():
             run_llm_enrich_modelle(force=args.force)
         elif args.mode == 'fix-logos':
             run_fix_logos()
+        elif args.mode == 'fuel-map':
+            run_fuel_map()
     except KeyboardInterrupt:
         logger.info("Abgebrochen durch Benutzer.")
     except Exception as e:

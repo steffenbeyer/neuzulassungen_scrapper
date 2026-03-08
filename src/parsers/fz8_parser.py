@@ -66,15 +66,46 @@ class FZ8Parser(BaseParser):
         return None
 
     def _find_header_row(self, rows):
-        """Findet die Zeile mit Spaltenueberschriften."""
+        """Findet die Zeile mit Spaltenueberschriften.
+
+        Die Header-Zeile hat typischerweise mehrere nicht-leere Zellen mit
+        Begriffen wie 'Marke', 'Anzahl', Monatsnamen etc.
+        Wichtig: Nicht mit Titelzeilen verwechseln, die nur eine Zelle haben.
+        """
+        label_hints = ['marke', 'fahrzeugart', 'bundesland', 'kraftstoff',
+                       'antriebsart', 'segment', 'land', 'merkmal']
+        month_hints = ['januar', 'februar', 'märz', 'maerz', 'april', 'mai', 'juni',
+                       'juli', 'august', 'september', 'oktober', 'november', 'dezember']
+
         for i, row in enumerate(rows):
             if not row:
                 continue
+            # Nur Zeilen mit mindestens 2 nicht-leeren Zellen beruecksichtigen
+            non_empty = [str(c).strip().lower() for c in row if c is not None and str(c).strip()]
+            if len(non_empty) < 2:
+                continue
+
             row_str = [str(c).strip().lower() if c else '' for c in row]
-            # Typische Header-Begriffe
-            header_hints = ['fahrzeugart', 'bundesland', 'kraftstoff', 'anzahl', 'monat', 'januar', 'februar']
-            if any(any(h in cell for h in header_hints) for cell in row_str if cell):
+            has_label = any(any(h in cell for h in label_hints) for cell in row_str)
+            has_value = any(any(h in cell for h in month_hints + ['anzahl', 'neuzulassungen'])
+                           for cell in row_str)
+            if has_label and has_value:
                 return i, row
+
+        # Fallback: Zeile mit Label-Hint und Sub-Header mit 'Anzahl'
+        for i, row in enumerate(rows):
+            if not row:
+                continue
+            non_empty = [str(c).strip().lower() for c in row if c is not None and str(c).strip()]
+            if len(non_empty) < 2:
+                continue
+            row_str = [str(c).strip().lower() if c else '' for c in row]
+            if any(any(h in cell for h in label_hints) for cell in row_str):
+                if i + 1 < len(rows) and rows[i + 1]:
+                    next_str = [str(c).strip().lower() if c else '' for c in rows[i + 1]]
+                    if any('anzahl' in c for c in next_str):
+                        return i, row
+
         return 0, rows[0] if rows else []
 
     def parse(self, filepath):
@@ -123,11 +154,16 @@ class FZ8Parser(BaseParser):
         breakdown_type = self._detect_breakdown_type(sheet_name, header_row)
 
         # Spaltenindizes ermitteln
-        label_col = 0
+        label_col = None
         anzahl_col = None
         header_str = [str(c).lower() if c else '' for c in header_row]
 
         for j, cell in enumerate(header_str):
+            if label_col is None and cell and any(h in cell for h in [
+                'marke', 'fahrzeugart', 'bundesland', 'kraftstoff', 'land',
+                'antriebsart', 'segment', 'merkmal'
+            ]):
+                label_col = j
             if any(h in cell for h in ['anzahl', 'neuzulassungen', 'zulassungen']):
                 anzahl_col = j
                 break
@@ -140,11 +176,31 @@ class FZ8Parser(BaseParser):
                     break
                 anzahl_col = j  # Fallback: erste Monatsspalte
 
+        if label_col is None:
+            label_col = 1  # Default: Spalte B
+
         if anzahl_col is None:
-            # Fallback: erste numerische Spalte nach label_col
-            for j in range(1, min(15, len(header_row))):
-                if j < len(rows[header_idx + 1] if header_idx + 1 < len(rows) else []):
-                    val = rows[header_idx + 1][j] if header_idx + 1 < len(rows) else None
+            # Check sub-header row for 'Anzahl'
+            if header_idx + 1 < len(rows) and rows[header_idx + 1]:
+                sub_str = [str(c).lower() if c else '' for c in rows[header_idx + 1]]
+                for j, cell in enumerate(sub_str):
+                    if 'anzahl' in cell:
+                        anzahl_col = j
+                        break
+
+        # Data starts after header + sub-header rows
+        data_start = header_idx + 1
+        if anzahl_col is not None and header_idx + 1 < len(rows) and rows[header_idx + 1]:
+            sub_str = [str(c).lower() if c else '' for c in rows[header_idx + 1]]
+            if any('anzahl' in c or 'anteil' in c for c in sub_str):
+                data_start = header_idx + 2
+
+        if anzahl_col is None:
+            # Fallback: first column after label with numeric data
+            test_row_idx = data_start
+            if test_row_idx < len(rows) and rows[test_row_idx]:
+                for j in range(label_col + 1, min(15, len(rows[test_row_idx]))):
+                    val = rows[test_row_idx][j]
                     if val is not None:
                         try:
                             int(DataNormalizer.normalize_anzahl(val))
@@ -154,9 +210,9 @@ class FZ8Parser(BaseParser):
                             pass
 
         if anzahl_col is None:
-            anzahl_col = 1
+            anzahl_col = label_col + 1
 
-        for i in range(header_idx + 1, len(rows)):
+        for i in range(data_start, len(rows)):
             row = rows[i]
             if not row or len(row) <= max(label_col, anzahl_col):
                 continue
