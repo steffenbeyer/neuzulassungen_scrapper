@@ -89,7 +89,14 @@ class DBWriter:
 
         cache_key = (marke_id, normalized.upper())
         if cache_key in self._modell_cache:
-            return self._modell_cache[cache_key]
+            modell_id = self._modell_cache[cache_key]
+            # Update segment if provided (cache hit skips INSERT...ON DUPLICATE)
+            if segment and modell_id:
+                db.execute(
+                    "UPDATE modelle SET segment = %s WHERE id = %s AND segment IS NULL",
+                    (segment, modell_id)
+                )
+            return modell_id
 
         # Slug aus Markenname + Modellname
         marke_result = db.execute("SELECT name FROM marken WHERE id = %s", (marke_id,))
