@@ -1,0 +1,149 @@
+{
+  "_comment": "Zentrale Datei fuer Laender und verfuegbare Datenquellen. Wird vom Scraper und Backend verwendet.",
+  "_updated": "2026-03-08",
+  "regions": {
+    "germany": {
+      "countries": [
+        {
+          "code": "DE",
+          "name": "Deutschland",
+          "name_en": "Germany",
+          "sources": [
+            {
+              "id": "KBA_FZ10",
+              "name": "KBA FZ10 - Neuzulassungen nach Marken und Modellreihen",
+              "type": "monthly",
+              "granularity": "brand+model",
+              "fuel_type": false,
+              "available_from": 2008,
+              "status": "active",
+              "url": "https://www.kba.de/SharedDocs/Publikationen/DE/Statistik/Fahrzeuge/FZ10/"
+            },
+            {
+              "id": "KBA_FZ11",
+              "name": "KBA FZ11 - Neuzulassungen nach Segmenten",
+              "type": "monthly",
+              "granularity": "brand+model+segment",
+              "fuel_type": false,
+              "available_from": 2008,
+              "status": "active"
+            },
+            {
+              "id": "KBA_FZ8",
+              "name": "KBA FZ8 - Neuzulassungen nach Merkmalen",
+              "type": "monthly",
+              "granularity": "aggregated (vehicle_type, region, fuel_type)",
+              "fuel_type": true,
+              "available_from": 2008,
+              "status": "active"
+            },
+            {
+              "id": "KBA_FZ9",
+              "name": "KBA FZ9 - Besitzumschreibungen",
+              "type": "monthly",
+              "granularity": "aggregated (vehicle_type)",
+              "fuel_type": false,
+              "available_from": 2008,
+              "status": "active"
+            },
+            {
+              "id": "KBA_FZ28",
+              "name": "KBA FZ28 - Alternative Antriebe",
+              "type": "yearly",
+              "granularity": "brand+model+fuel_type",
+              "fuel_type": true,
+              "available_from": 2008,
+              "status": "active",
+              "note": "Nur alternative Antriebe (BEV, PHEV, Hybrid, H2, CNG, LPG)"
+            },
+            {
+              "id": "KBA_FZ4",
+              "name": "KBA FZ4 - Neuzulassungen (jaehrlich)",
+              "type": "yearly",
+              "granularity": "brand+model",
+              "fuel_type": false,
+              "available_from": 2008,
+              "status": "active"
+            },
+            {
+              "id": "KBA_FZ14",
+              "name": "KBA FZ14 - Umweltdaten",
+              "type": "yearly",
+              "granularity": "aggregated (emission_class, fuel_type)",
+              "fuel_type": true,
+              "available_from": 2008,
+              "status": "active"
+            },
+            {
+              "id": "KBA_FZ1",
+              "name": "KBA FZ1 - Fahrzeugbestand",
+              "type": "yearly",
+              "granularity": "brand+fuel_type",
+              "fuel_type": true,
+              "available_from": 2008,
+              "status": "active"
+            }
+          ]
+        }
+      ]
+    },
+    "europe": {
+      "countries": [
+        {"code": "AT", "name": "Oesterreich", "name_en": "Austria", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "BE", "name": "Belgien", "name_en": "Belgium", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "BG", "name": "Bulgarien", "name_en": "Bulgaria", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "HR", "name": "Kroatien", "name_en": "Croatia", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "CY", "name": "Zypern", "name_en": "Cyprus", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "CZ", "name": "Tschechien", "name_en": "Czech Republic", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "DK", "name": "Daenemark", "name_en": "Denmark", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "EE", "name": "Estland", "name_en": "Estonia", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "FI", "name": "Finnland", "name_en": "Finland", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "FR", "name": "Frankreich", "name_en": "France", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "GR", "name": "Griechenland", "name_en": "Greece", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "HU", "name": "Ungarn", "name_en": "Hungary", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "IE", "name": "Irland", "name_en": "Ireland", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "IT", "name": "Italien", "name_en": "Italy", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "LV", "name": "Lettland", "name_en": "Latvia", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "LT", "name": "Litauen", "name_en": "Lithuania", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "LU", "name": "Luxemburg", "name_en": "Luxembourg", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "MT", "name": "Malta", "name_en": "Malta", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "NL", "name": "Niederlande", "name_en": "Netherlands", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "PL", "name": "Polen", "name_en": "Poland", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "PT", "name": "Portugal", "name_en": "Portugal", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "RO", "name": "Rumaenien", "name_en": "Romania", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "SK", "name": "Slowakei", "name_en": "Slovakia", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "SI", "name": "Slowenien", "name_en": "Slovenia", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "ES", "name": "Spanien", "name_en": "Spain", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "SE", "name": "Schweden", "name_en": "Sweden", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "NO", "name": "Norwegen", "name_en": "Norway", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "CH", "name": "Schweiz", "name_en": "Switzerland", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]},
+        {"code": "GB", "name": "Grossbritannien", "name_en": "United Kingdom", "sources": [{"id": "ACEA_CAR", "type": "monthly", "granularity": "country_total", "fuel_type": false, "status": "active"}]}
+      ]
+    },
+    "global_top20": {
+      "_comment": "Top 20 Nationen ausserhalb Europas nach Fahrzeugabsatz. Datenquellen muessen noch recherchiert und angebunden werden.",
+      "countries": [
+        {"code": "CN", "name": "China", "name_en": "China", "sources": [], "research_status": "pending", "potential_sources": ["CAAM (China Association of Automobile Manufacturers)", "CPCA (China Passenger Car Association)"]},
+        {"code": "US", "name": "USA", "name_en": "United States", "sources": [], "research_status": "pending", "potential_sources": ["BEA (Bureau of Economic Analysis)", "WardsAuto", "FHWA"]},
+        {"code": "JP", "name": "Japan", "name_en": "Japan", "sources": [], "research_status": "pending", "potential_sources": ["JAMA (Japan Automobile Manufacturers Association)", "JADA"]},
+        {"code": "IN", "name": "Indien", "name_en": "India", "sources": [], "research_status": "pending", "potential_sources": ["SIAM (Society of Indian Automobile Manufacturers)", "FADA"]},
+        {"code": "BR", "name": "Brasilien", "name_en": "Brazil", "sources": [], "research_status": "pending", "potential_sources": ["ANFAVEA (National Association of Motor Vehicle Manufacturers)"]},
+        {"code": "KR", "name": "Suedkorea", "name_en": "South Korea", "sources": [], "research_status": "pending", "potential_sources": ["KAMA (Korea Automobile Manufacturers Association)", "KAIDA"]},
+        {"code": "CA", "name": "Kanada", "name_en": "Canada", "sources": [], "research_status": "pending", "potential_sources": ["Statistics Canada", "DesRosiers Automotive"]},
+        {"code": "MX", "name": "Mexiko", "name_en": "Mexico", "sources": [], "research_status": "pending", "potential_sources": ["AMIA (Mexican Automobile Industry Association)", "INEGI"]},
+        {"code": "AU", "name": "Australien", "name_en": "Australia", "sources": [], "research_status": "pending", "potential_sources": ["VFACTS (Federal Chamber of Automotive Industries)"]},
+        {"code": "TH", "name": "Thailand", "name_en": "Thailand", "sources": [], "research_status": "pending", "potential_sources": ["FTI (Federation of Thai Industries)"]},
+        {"code": "ID", "name": "Indonesien", "name_en": "Indonesia", "sources": [], "research_status": "pending", "potential_sources": ["GAIKINDO (Association of Indonesian Automotive Industries)"]},
+        {"code": "RU", "name": "Russland", "name_en": "Russia", "sources": [], "research_status": "pending", "potential_sources": ["AEB (Association of European Businesses in Russia)"]},
+        {"code": "TR", "name": "Tuerkei", "name_en": "Turkey", "sources": [], "research_status": "pending", "potential_sources": ["OSD (Automotive Manufacturers Association Turkey)"]},
+        {"code": "SA", "name": "Saudi-Arabien", "name_en": "Saudi Arabia", "sources": [], "research_status": "pending", "potential_sources": ["GASTAT (General Authority for Statistics)"]},
+        {"code": "AE", "name": "Vereinigte Arabische Emirate", "name_en": "United Arab Emirates", "sources": [], "research_status": "pending", "potential_sources": ["FCSA (Federal Competitiveness and Statistics Centre)"]},
+        {"code": "ZA", "name": "Suedafrika", "name_en": "South Africa", "sources": [], "research_status": "pending", "potential_sources": ["NAAMSA (National Association of Automobile Manufacturers of South Africa)"]},
+        {"code": "MY", "name": "Malaysia", "name_en": "Malaysia", "sources": [], "research_status": "pending", "potential_sources": ["MAA (Malaysian Automotive Association)"]},
+        {"code": "EG", "name": "Aegypten", "name_en": "Egypt", "sources": [], "research_status": "pending", "potential_sources": ["AMIC (Automotive Marketing Information Council)"]},
+        {"code": "AR", "name": "Argentinien", "name_en": "Argentina", "sources": [], "research_status": "pending", "potential_sources": ["ADEFA (Association of Automobile Manufacturers)"]},
+        {"code": "CL", "name": "Chile", "name_en": "Chile", "sources": [], "research_status": "pending", "potential_sources": ["ANAC (National Automotive Association of Chile)"]}
+      ]
+    }
+  }
+}
