@@ -175,13 +175,13 @@ def run_full_import():
         'FZ11': FZ11Parser(),
         'FZ8':  FZ8Parser(),
         'FZ9':  FZ9Parser(),
+        'FZ28': FZ28Parser(),
     }
 
     # Jaehrliche Parser
     yearly_parsers = {
         'FZ4':  FZ4Parser(),
         'FZ14': FZ14Parser(),
-        'FZ28': FZ28Parser(),
         'FZ1':  FZ1Parser(),
     }
 

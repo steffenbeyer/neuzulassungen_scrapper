@@ -49,12 +49,12 @@
             {
               "id": "KBA_FZ28",
               "name": "KBA FZ28 - Alternative Antriebe",
-              "type": "yearly",
+              "type": "monthly",
               "granularity": "brand+model+fuel_type",
               "fuel_type": true,
               "available_from": 2008,
               "status": "active",
-              "note": "Nur alternative Antriebe (BEV, PHEV, Hybrid, H2, CNG, LPG)"
+              "note": "Monatliche Daten fuer alternative Antriebe (BEV, PHEV, Hybrid, H2, CNG, LPG) mit Marken- und Modellaufloesung"
             },
             {
               "id": "KBA_FZ4",

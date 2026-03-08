@@ -84,7 +84,8 @@ class FZ28Parser(BaseParser):
             self.close()
             return []
 
-        monat = 0  # Jaehrliche Daten
+        # FZ28 ist monatlich verfuegbar (frueherer Code ging von jaehrlich aus)
+        monat = month if month else 0
         results = []
         sheet_names = self.get_sheet_names()
 

@@ -25,15 +25,15 @@ class KBADownloader:
         'FZ11': '{base}/FZ11/fz11_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
         'FZ8':  '{base}/FZ8/fz8_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
         'FZ9':  '{base}/FZ9/fz9_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
+        'FZ28': '{base}/FZ28/fz28_{year}_{month:02d}.xlsx?__blob=publicationFile&v=2',
         # Jaehrliche Publikationen
         'FZ4':  '{base}/FZ4/fz4_{year}.xlsx?__blob=publicationFile&v=2',
         'FZ14': '{base}/FZ14/fz14_{year}.xlsx?__blob=publicationFile&v=2',
-        'FZ28': '{base}/FZ28/fz28_{year}.xlsx?__blob=publicationFile&v=2',
         'FZ1':  '{base}/FZ1/fz1_{year}.xlsx?__blob=publicationFile&v=2',
     }
 
-    MONTHLY_TYPES = ['FZ10', 'FZ11', 'FZ8', 'FZ9']
-    YEARLY_TYPES = ['FZ4', 'FZ14', 'FZ28', 'FZ1']
+    MONTHLY_TYPES = ['FZ10', 'FZ11', 'FZ8', 'FZ9', 'FZ28']
+    YEARLY_TYPES = ['FZ4', 'FZ14', 'FZ1']
 
     def __init__(self, download_dir=None):
         self.download_dir = Path(download_dir or Config.DOWNLOAD_DIR)

@@ -35,12 +35,12 @@ MONTHLY_PARSERS = {
     'FZ11': (FZ11Parser, 'neuzulassungen'),
     'FZ8':  (FZ8Parser,  'aggregiert'),
     'FZ9':  (FZ9Parser,  'aggregiert'),
+    'FZ28': (FZ28Parser, 'neuzulassungen'),
 }
 
 YEARLY_PARSERS = {
     'FZ4':  (FZ4Parser,  'neuzulassungen'),
     'FZ14': (FZ14Parser, 'aggregiert'),
-    'FZ28': (FZ28Parser, 'neuzulassungen'),
     'FZ1':  (FZ1Parser,  'bestand'),
 }
 
